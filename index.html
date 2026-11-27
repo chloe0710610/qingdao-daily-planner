@@ -98,6 +98,15 @@ textarea{resize:none}
 @media(max-width:420px){.weather .icons{min-width:0}.weather button{font-size:.75rem}.weather button span{max-width:100%}}
 .language-control{display:grid;gap:4px;font-size:.8rem}.language-control select{font:inherit;color:inherit;background:var(--paper);border:1px solid var(--line);border-radius:6px;padding:5px}
 @media(max-width:540px){header{flex-wrap:wrap}.brand{flex:1 0 100%}}
+.quiet{font-size:.9rem;margin:0 0 12px;line-height:1.5}
+.block-actions{display:flex;flex-wrap:wrap;gap:4px;padding:0 6px 6px;align-items:center}
+.block-actions label{display:flex;gap:4px;align-items:center;min-height:36px;font-size:.8rem}
+.block-actions input{accent-color:var(--ink)}
+.block-actions button{font-size:.8rem;padding:4px 6px;border:1px solid var(--line)}
+.block-actions small{font-size:.8rem}
+.more-blocks{margin-top:10px}
+@media(max-width:620px){.block-actions button{width:100%}}
+@media print{.block-actions,.more-blocks{display:none}}
 </style>
 <main id="planner" data-view="plan">
 <header><div class="brand"><span>Qing Dao</span><h1>Daily Planner</h1></div><label class="date">Date <input id="date" type="date" aria-label="Date" required></label><label class="language-control"><span id="language-label">Language</span><select id="language" aria-labelledby="language-label"><option value="en" lang="en">English</option><option value="zh-Hant" lang="zh-Hant">繁體中文</option></select></label></header>
@@ -109,10 +118,10 @@ textarea{resize:none}
 <button type="button" data-view="actual" aria-pressed="false">Actual</button>
 </div>
 <section class="priority-panel" aria-labelledby="priority-title">
-<h2 id="priority-title">Top 3 Priorities</h2>
+<h2 id="priority-title">Start with one thing</h2><p class="quiet">Pick one thing to focus on. The other two are optional.</p>
 <ol><li><label><input type="checkbox" data-priority-done="priority1Done" aria-label="Complete priority 1"><input type="text" data-record="priority1" aria-label="Priority 1" placeholder="Priority 1"></label></li><li><label><input type="checkbox" data-priority-done="priority2Done" aria-label="Complete priority 2"><input type="text" data-record="priority2" aria-label="Priority 2" placeholder="Priority 2"></label></li><li><label><input type="checkbox" data-priority-done="priority3Done" aria-label="Complete priority 3"><input type="text" data-record="priority3" aria-label="Priority 3" placeholder="Priority 3"></label></li></ol>
 </section>
-<h2 class="time-title">Time Blocks</h2>
+<h2 class="time-title">Time Blocks</h2><p class="quiet">Leave the time blank if you need flexibility. Use Notes for the smallest next step.</p>
 <table aria-label="Time Blocks">
 <colgroup><col class="plan" style="width:11%"><col class="plan"><col class="plan"><col class="actual" style="width:11%"><col class="actual"><col class="actual"></colgroup>
 <thead>
@@ -121,6 +130,7 @@ textarea{resize:none}
 </thead>
 <tbody id="rows"></tbody>
 </table>
+<button class="record-action more-blocks" id="more-blocks" type="button">Show more rows</button>
 </section>
 <section id="record-page" aria-label="Daily Log" hidden>
 <div class="reflections"><label class="record-card">Daily Review<textarea data-record="reflection" rows="3"></textarea></label><div class="feelings"><section class="record-card">
@@ -175,7 +185,11 @@ for (const [side, group] of [['plan','Planned'],['actual','Actual']]) {
 }
 
 const inputs = []
-for (let row = 0; row < 18; row++) {
+const blockControls = []
+let visibleRows = 4
+const moreBlocks = document.getElementById('more-blocks')
+function addRow() {
+  const row = blockControls.length
   const tr = rows.insertRow()
   fields.forEach(({side, group, label}, column) => {
     const cell = tr.insertCell()
@@ -186,10 +200,91 @@ for (let row = 0; row < 18; row++) {
     input.addEventListener('input', () => {
       entry.cells[row * fields.length + column] = input.value
       save()
+      refreshBlocks()
     })
     cell.append(input)
     inputs.push(input)
+    if (column === 2) {
+      const controls = document.createElement('div')
+      controls.className = 'block-actions'
+      const label = document.createElement('label')
+      const done = document.createElement('input')
+      done.type = 'checkbox'
+      label.append(done, document.createTextNode('Done'))
+      const move = document.createElement('button')
+      move.type = 'button'
+      move.textContent = 'Move to tomorrow'
+      const moved = document.createElement('small')
+      moved.textContent = 'Moved to tomorrow'
+      controls.append(label, move, moved)
+      cell.append(controls)
+      blockControls.push({tr, controls, done, move, moved, label})
+      done.addEventListener('change', () => {
+        const block = blockState(row)
+        block.done = done.checked
+        save()
+        refreshBlocks()
+      })
+      move.addEventListener('click', () => moveTomorrow(row))
+    }
   })
+}
+function blockState(row) {
+  entry.blocks ??= {}
+  return entry.blocks[row] ??= {}
+}
+function refreshBlocks() {
+  blockControls.forEach(({tr,controls,done,move,moved,label},row) => {
+    const state = entry.blocks?.[row]
+    const hasTask = Boolean(entry.cells[row * fields.length + 1]?.trim())
+    const wasMoved = Boolean(state?.moved)
+    tr.hidden = row >= visibleRows
+    controls.hidden = !hasTask && !wasMoved
+    done.checked = state?.done === true
+    label.hidden = wasMoved
+    move.hidden = wasMoved || done.checked
+    moved.hidden = !wasMoved
+  })
+}
+function rowsUsed(day) {
+  const occupied = Object.entries(day.cells).filter(([,value]) => value?.trim()).map(([index]) => Math.floor(Number(index) / fields.length) + 1)
+  const tracked = Object.keys(day.blocks ?? {}).map(row => Number(row) + 1)
+  return Math.max(0,...occupied,...tracked)
+}
+moreBlocks.addEventListener('click', () => {
+  visibleRows += 4
+  while (blockControls.length < visibleRows) addRow()
+  refreshBlocks()
+})
+function moveTomorrow(row) {
+  const state = blockState(row)
+  const offset = row * fields.length
+  if (state.done || state.moved || !entry.cells[offset + 1]?.trim()) return
+  const next = new Date(activeDate + 'T12:00:00')
+  next.setDate(next.getDate() + 1)
+  const day = localDay(next)
+  const targetKey = 'qingdao-daily-v1:' + day
+  const sourceKey = storageKey()
+  const id = activeDate + ':' + row
+  try {
+    const target = JSON.parse(localStorage.getItem(targetKey)) ?? {weather:'',cells:{}}
+    target.blocks ??= {}
+    if (!Object.values(target.blocks).some(block => block.from === id)) {
+      let slot = 0
+      while (target.blocks[slot] || fields.some((_,column) => target.cells[slot * fields.length + column]?.trim())) slot++
+      target.cells[slot * fields.length + 1] = entry.cells[offset + 1]
+      target.cells[slot * fields.length + 2] = entry.cells[offset + 2] ?? ''
+      target.blocks[slot] = {from:id}
+      localStorage.setItem(targetKey,JSON.stringify(target))
+    }
+    drafts.delete(day)
+    localStorage.setItem(sourceKey,JSON.stringify({...entry,blocks:{...entry.blocks,[row]:{...state,moved:day}}}))
+    state.moved = day
+    refreshBlocks()
+    status.textContent = 'Moved to tomorrow'
+  } catch {
+    status.textContent = 'Could not finish moving. Try again.'
+  }
 }
 
 const weatherButtons = new Map()
@@ -492,7 +587,10 @@ function load() {
     entry ??= {weather:'',cells:{}}
     drafts.set(activeDate, entry)
   }
+  visibleRows = Math.max(4,rowsUsed(entry))
+  while (blockControls.length < visibleRows) addRow()
   inputs.forEach((input, index) => { input.value = entry.cells[index] ?? '' })
+  refreshBlocks()
   for (const input of recordInputs) {
     input.value = entry.record?.[input.dataset.record] ?? ''
   }
@@ -517,7 +615,7 @@ const now = new Date()
 date.value = [now.getFullYear(),now.getMonth()+1,now.getDate()].map(n => String(n).padStart(2,'0')).join('-')
 date.addEventListener('change', load)
 load()
-const translations = {"Qing Dao":"傾島","Daily Planner":"每日計畫","Language":"語言","Qing Dao｜Daily Planner":"傾島｜每日計畫","Date":"日期","Planner pages":"頁面","Schedule":"日程","Daily Log":"每日紀錄","Choose weather":"選擇天氣","Weather":"天氣","Schedule view":"日程檢視","Planned":"原本計劃","Actual":"實際發生","Top 3 Priorities":"今日三件重要事項","Time Blocks":"時間區塊","Daily Review":"今天結語","Mood":"今天心情","Start recording":"開始錄音","Stop recording":"結束錄音","Physical Well-being":"身體狀態","Meals":"餐食","Breakfast":"早餐","Lunch":"午餐","Dinner":"晚餐","Amount (ml)":"本次飲水量（ml）","Log Water":"記錄喝水","Sleep":"睡眠","Sleep (hr)":"睡眠時間（小時）","Start Sleep":"現在睡覺","End Sleep":"我醒了","Receipts":"購物收據","Choose photos (multiple allowed)":"從相簿或檔案選取照片（可多選）","Take a photo":"用相機拍照","Emotion tag or Emoji":"情緒標籤或 Emoji","e.g. Happy 😊":"例如 開心 😊","Intensity":"情緒強度","0 · None":"0 · 沒有","10 · Very strong":"10 · 很強烈","Reason for purchase":"購買原因","Notes":"備註","Save Receipt":"儲存收據","To-Do":"待辦","Time":"時間","Task":"任務","Snow":"下雪","Sunny":"晴天","Rain":"下雨","Partly cloudy":"晴時多雲","Enter a valid number":"請輸入有效的數值","Could not save the sleep start time":"無法儲存睡眠開始時間","Could not save sleep. Try again.":"無法儲存睡眠紀錄，請再試一次","Could not load recordings in this browser":"此瀏覽器無法讀取錄音","Could not load receipt photos in this browser":"此瀏覽器無法讀取收據照片","Enter a reason and attach a receipt photo":"請填寫購買原因並附上收據","Receipt saved":"收據已儲存","Could not save the receipt. Try again.":"無法儲存收據，請再試一次","Could not save the recording. Try again.":"錄音未能儲存，請再試一次","Recording":"錄音中","Could not start recording. Check microphone permissions.":"無法啟用錄音，請確認麥克風權限","Could not load saved entries in this browser":"這個瀏覽器無法讀取先前的紀錄","Saved on this device":"已儲存於此裝置","Could not save. Your entry is still on this page.":"無法儲存，紀錄暫時保留在此頁","Priority 1":"重要事項 1","Complete priority 1":"完成重要事項 1","Priority 2":"重要事項 2","Complete priority 2":"完成重要事項 2","Priority 3":"重要事項 3","Complete priority 3":"完成重要事項 3","Planned block 1 Time":"原本計劃 第 1 列 時間","Planned block 1 Task":"原本計劃 第 1 列 任務","Planned block 1 Notes":"原本計劃 第 1 列 備註","Actual block 1 Time":"實際發生 第 1 列 時間","Actual block 1 Task":"實際發生 第 1 列 任務","Actual block 1 Notes":"實際發生 第 1 列 備註","Planned block 2 Time":"原本計劃 第 2 列 時間","Planned block 2 Task":"原本計劃 第 2 列 任務","Planned block 2 Notes":"原本計劃 第 2 列 備註","Actual block 2 Time":"實際發生 第 2 列 時間","Actual block 2 Task":"實際發生 第 2 列 任務","Actual block 2 Notes":"實際發生 第 2 列 備註","Planned block 3 Time":"原本計劃 第 3 列 時間","Planned block 3 Task":"原本計劃 第 3 列 任務","Planned block 3 Notes":"原本計劃 第 3 列 備註","Actual block 3 Time":"實際發生 第 3 列 時間","Actual block 3 Task":"實際發生 第 3 列 任務","Actual block 3 Notes":"實際發生 第 3 列 備註","Planned block 4 Time":"原本計劃 第 4 列 時間","Planned block 4 Task":"原本計劃 第 4 列 任務","Planned block 4 Notes":"原本計劃 第 4 列 備註","Actual block 4 Time":"實際發生 第 4 列 時間","Actual block 4 Task":"實際發生 第 4 列 任務","Actual block 4 Notes":"實際發生 第 4 列 備註","Planned block 5 Time":"原本計劃 第 5 列 時間","Planned block 5 Task":"原本計劃 第 5 列 任務","Planned block 5 Notes":"原本計劃 第 5 列 備註","Actual block 5 Time":"實際發生 第 5 列 時間","Actual block 5 Task":"實際發生 第 5 列 任務","Actual block 5 Notes":"實際發生 第 5 列 備註","Planned block 6 Time":"原本計劃 第 6 列 時間","Planned block 6 Task":"原本計劃 第 6 列 任務","Planned block 6 Notes":"原本計劃 第 6 列 備註","Actual block 6 Time":"實際發生 第 6 列 時間","Actual block 6 Task":"實際發生 第 6 列 任務","Actual block 6 Notes":"實際發生 第 6 列 備註","Planned block 7 Time":"原本計劃 第 7 列 時間","Planned block 7 Task":"原本計劃 第 7 列 任務","Planned block 7 Notes":"原本計劃 第 7 列 備註","Actual block 7 Time":"實際發生 第 7 列 時間","Actual block 7 Task":"實際發生 第 7 列 任務","Actual block 7 Notes":"實際發生 第 7 列 備註","Planned block 8 Time":"原本計劃 第 8 列 時間","Planned block 8 Task":"原本計劃 第 8 列 任務","Planned block 8 Notes":"原本計劃 第 8 列 備註","Actual block 8 Time":"實際發生 第 8 列 時間","Actual block 8 Task":"實際發生 第 8 列 任務","Actual block 8 Notes":"實際發生 第 8 列 備註","Planned block 9 Time":"原本計劃 第 9 列 時間","Planned block 9 Task":"原本計劃 第 9 列 任務","Planned block 9 Notes":"原本計劃 第 9 列 備註","Actual block 9 Time":"實際發生 第 9 列 時間","Actual block 9 Task":"實際發生 第 9 列 任務","Actual block 9 Notes":"實際發生 第 9 列 備註","Planned block 10 Time":"原本計劃 第 10 列 時間","Planned block 10 Task":"原本計劃 第 10 列 任務","Planned block 10 Notes":"原本計劃 第 10 列 備註","Actual block 10 Time":"實際發生 第 10 列 時間","Actual block 10 Task":"實際發生 第 10 列 任務","Actual block 10 Notes":"實際發生 第 10 列 備註","Planned block 11 Time":"原本計劃 第 11 列 時間","Planned block 11 Task":"原本計劃 第 11 列 任務","Planned block 11 Notes":"原本計劃 第 11 列 備註","Actual block 11 Time":"實際發生 第 11 列 時間","Actual block 11 Task":"實際發生 第 11 列 任務","Actual block 11 Notes":"實際發生 第 11 列 備註","Planned block 12 Time":"原本計劃 第 12 列 時間","Planned block 12 Task":"原本計劃 第 12 列 任務","Planned block 12 Notes":"原本計劃 第 12 列 備註","Actual block 12 Time":"實際發生 第 12 列 時間","Actual block 12 Task":"實際發生 第 12 列 任務","Actual block 12 Notes":"實際發生 第 12 列 備註","Planned block 13 Time":"原本計劃 第 13 列 時間","Planned block 13 Task":"原本計劃 第 13 列 任務","Planned block 13 Notes":"原本計劃 第 13 列 備註","Actual block 13 Time":"實際發生 第 13 列 時間","Actual block 13 Task":"實際發生 第 13 列 任務","Actual block 13 Notes":"實際發生 第 13 列 備註","Planned block 14 Time":"原本計劃 第 14 列 時間","Planned block 14 Task":"原本計劃 第 14 列 任務","Planned block 14 Notes":"原本計劃 第 14 列 備註","Actual block 14 Time":"實際發生 第 14 列 時間","Actual block 14 Task":"實際發生 第 14 列 任務","Actual block 14 Notes":"實際發生 第 14 列 備註","Planned block 15 Time":"原本計劃 第 15 列 時間","Planned block 15 Task":"原本計劃 第 15 列 任務","Planned block 15 Notes":"原本計劃 第 15 列 備註","Actual block 15 Time":"實際發生 第 15 列 時間","Actual block 15 Task":"實際發生 第 15 列 任務","Actual block 15 Notes":"實際發生 第 15 列 備註","Planned block 16 Time":"原本計劃 第 16 列 時間","Planned block 16 Task":"原本計劃 第 16 列 任務","Planned block 16 Notes":"原本計劃 第 16 列 備註","Actual block 16 Time":"實際發生 第 16 列 時間","Actual block 16 Task":"實際發生 第 16 列 任務","Actual block 16 Notes":"實際發生 第 16 列 備註","Planned block 17 Time":"原本計劃 第 17 列 時間","Planned block 17 Task":"原本計劃 第 17 列 任務","Planned block 17 Notes":"原本計劃 第 17 列 備註","Actual block 17 Time":"實際發生 第 17 列 時間","Actual block 17 Task":"實際發生 第 17 列 任務","Actual block 17 Notes":"實際發生 第 17 列 備註","Planned block 18 Time":"原本計劃 第 18 列 時間","Planned block 18 Task":"原本計劃 第 18 列 任務","Planned block 18 Notes":"原本計劃 第 18 列 備註","Actual block 18 Time":"實際發生 第 18 列 時間","Actual block 18 Task":"實際發生 第 18 列 任務","Actual block 18 Notes":"實際發生 第 18 列 備註"}
+const translations = {"Start with one thing":"先從一件事開始","Pick one thing to focus on. The other two are optional.":"挑一件想專注的事，另外兩格可以留白。","Leave the time blank if you need flexibility. Use Notes for the smallest next step.":"時間可以留白。在備註寫下你願意先做的一小步。","Show more rows":"顯示更多列","Done":"完成","Move to tomorrow":"順延到隔天","Moved to tomorrow":"已順延到隔天","Could not finish moving. Try again.":"順延尚未完成，請再試一次。","Qing Dao":"傾島","Daily Planner":"每日計畫","Language":"語言","Qing Dao｜Daily Planner":"傾島｜每日計畫","Date":"日期","Planner pages":"頁面","Schedule":"日程","Daily Log":"每日紀錄","Choose weather":"選擇天氣","Weather":"天氣","Schedule view":"日程檢視","Planned":"原本計劃","Actual":"實際發生","Top 3 Priorities":"今日三件重要事項","Time Blocks":"時間區塊","Daily Review":"今天結語","Mood":"今天心情","Start recording":"開始錄音","Stop recording":"結束錄音","Physical Well-being":"身體狀態","Meals":"餐食","Breakfast":"早餐","Lunch":"午餐","Dinner":"晚餐","Amount (ml)":"本次飲水量（ml）","Log Water":"記錄喝水","Sleep":"睡眠","Sleep (hr)":"睡眠時間（小時）","Start Sleep":"現在睡覺","End Sleep":"我醒了","Receipts":"購物收據","Choose photos (multiple allowed)":"從相簿或檔案選取照片（可多選）","Take a photo":"用相機拍照","Emotion tag or Emoji":"情緒標籤或 Emoji","e.g. Happy 😊":"例如 開心 😊","Intensity":"情緒強度","0 · None":"0 · 沒有","10 · Very strong":"10 · 很強烈","Reason for purchase":"購買原因","Notes":"備註","Save Receipt":"儲存收據","To-Do":"待辦","Time":"時間","Task":"任務","Snow":"下雪","Sunny":"晴天","Rain":"下雨","Partly cloudy":"晴時多雲","Enter a valid number":"請輸入有效的數值","Could not save the sleep start time":"無法儲存睡眠開始時間","Could not save sleep. Try again.":"無法儲存睡眠紀錄，請再試一次","Could not load recordings in this browser":"此瀏覽器無法讀取錄音","Could not load receipt photos in this browser":"此瀏覽器無法讀取收據照片","Enter a reason and attach a receipt photo":"請填寫購買原因並附上收據","Receipt saved":"收據已儲存","Could not save the receipt. Try again.":"無法儲存收據，請再試一次","Could not save the recording. Try again.":"錄音未能儲存，請再試一次","Recording":"錄音中","Could not start recording. Check microphone permissions.":"無法啟用錄音，請確認麥克風權限","Could not load saved entries in this browser":"這個瀏覽器無法讀取先前的紀錄","Saved on this device":"已儲存於此裝置","Could not save. Your entry is still on this page.":"無法儲存，紀錄暫時保留在此頁","Priority 1":"重要事項 1","Complete priority 1":"完成重要事項 1","Priority 2":"重要事項 2","Complete priority 2":"完成重要事項 2","Priority 3":"重要事項 3","Complete priority 3":"完成重要事項 3","Planned block 1 Time":"原本計劃 第 1 列 時間","Planned block 1 Task":"原本計劃 第 1 列 任務","Planned block 1 Notes":"原本計劃 第 1 列 備註","Actual block 1 Time":"實際發生 第 1 列 時間","Actual block 1 Task":"實際發生 第 1 列 任務","Actual block 1 Notes":"實際發生 第 1 列 備註","Planned block 2 Time":"原本計劃 第 2 列 時間","Planned block 2 Task":"原本計劃 第 2 列 任務","Planned block 2 Notes":"原本計劃 第 2 列 備註","Actual block 2 Time":"實際發生 第 2 列 時間","Actual block 2 Task":"實際發生 第 2 列 任務","Actual block 2 Notes":"實際發生 第 2 列 備註","Planned block 3 Time":"原本計劃 第 3 列 時間","Planned block 3 Task":"原本計劃 第 3 列 任務","Planned block 3 Notes":"原本計劃 第 3 列 備註","Actual block 3 Time":"實際發生 第 3 列 時間","Actual block 3 Task":"實際發生 第 3 列 任務","Actual block 3 Notes":"實際發生 第 3 列 備註","Planned block 4 Time":"原本計劃 第 4 列 時間","Planned block 4 Task":"原本計劃 第 4 列 任務","Planned block 4 Notes":"原本計劃 第 4 列 備註","Actual block 4 Time":"實際發生 第 4 列 時間","Actual block 4 Task":"實際發生 第 4 列 任務","Actual block 4 Notes":"實際發生 第 4 列 備註","Planned block 5 Time":"原本計劃 第 5 列 時間","Planned block 5 Task":"原本計劃 第 5 列 任務","Planned block 5 Notes":"原本計劃 第 5 列 備註","Actual block 5 Time":"實際發生 第 5 列 時間","Actual block 5 Task":"實際發生 第 5 列 任務","Actual block 5 Notes":"實際發生 第 5 列 備註","Planned block 6 Time":"原本計劃 第 6 列 時間","Planned block 6 Task":"原本計劃 第 6 列 任務","Planned block 6 Notes":"原本計劃 第 6 列 備註","Actual block 6 Time":"實際發生 第 6 列 時間","Actual block 6 Task":"實際發生 第 6 列 任務","Actual block 6 Notes":"實際發生 第 6 列 備註","Planned block 7 Time":"原本計劃 第 7 列 時間","Planned block 7 Task":"原本計劃 第 7 列 任務","Planned block 7 Notes":"原本計劃 第 7 列 備註","Actual block 7 Time":"實際發生 第 7 列 時間","Actual block 7 Task":"實際發生 第 7 列 任務","Actual block 7 Notes":"實際發生 第 7 列 備註","Planned block 8 Time":"原本計劃 第 8 列 時間","Planned block 8 Task":"原本計劃 第 8 列 任務","Planned block 8 Notes":"原本計劃 第 8 列 備註","Actual block 8 Time":"實際發生 第 8 列 時間","Actual block 8 Task":"實際發生 第 8 列 任務","Actual block 8 Notes":"實際發生 第 8 列 備註","Planned block 9 Time":"原本計劃 第 9 列 時間","Planned block 9 Task":"原本計劃 第 9 列 任務","Planned block 9 Notes":"原本計劃 第 9 列 備註","Actual block 9 Time":"實際發生 第 9 列 時間","Actual block 9 Task":"實際發生 第 9 列 任務","Actual block 9 Notes":"實際發生 第 9 列 備註","Planned block 10 Time":"原本計劃 第 10 列 時間","Planned block 10 Task":"原本計劃 第 10 列 任務","Planned block 10 Notes":"原本計劃 第 10 列 備註","Actual block 10 Time":"實際發生 第 10 列 時間","Actual block 10 Task":"實際發生 第 10 列 任務","Actual block 10 Notes":"實際發生 第 10 列 備註","Planned block 11 Time":"原本計劃 第 11 列 時間","Planned block 11 Task":"原本計劃 第 11 列 任務","Planned block 11 Notes":"原本計劃 第 11 列 備註","Actual block 11 Time":"實際發生 第 11 列 時間","Actual block 11 Task":"實際發生 第 11 列 任務","Actual block 11 Notes":"實際發生 第 11 列 備註","Planned block 12 Time":"原本計劃 第 12 列 時間","Planned block 12 Task":"原本計劃 第 12 列 任務","Planned block 12 Notes":"原本計劃 第 12 列 備註","Actual block 12 Time":"實際發生 第 12 列 時間","Actual block 12 Task":"實際發生 第 12 列 任務","Actual block 12 Notes":"實際發生 第 12 列 備註","Planned block 13 Time":"原本計劃 第 13 列 時間","Planned block 13 Task":"原本計劃 第 13 列 任務","Planned block 13 Notes":"原本計劃 第 13 列 備註","Actual block 13 Time":"實際發生 第 13 列 時間","Actual block 13 Task":"實際發生 第 13 列 任務","Actual block 13 Notes":"實際發生 第 13 列 備註","Planned block 14 Time":"原本計劃 第 14 列 時間","Planned block 14 Task":"原本計劃 第 14 列 任務","Planned block 14 Notes":"原本計劃 第 14 列 備註","Actual block 14 Time":"實際發生 第 14 列 時間","Actual block 14 Task":"實際發生 第 14 列 任務","Actual block 14 Notes":"實際發生 第 14 列 備註","Planned block 15 Time":"原本計劃 第 15 列 時間","Planned block 15 Task":"原本計劃 第 15 列 任務","Planned block 15 Notes":"原本計劃 第 15 列 備註","Actual block 15 Time":"實際發生 第 15 列 時間","Actual block 15 Task":"實際發生 第 15 列 任務","Actual block 15 Notes":"實際發生 第 15 列 備註","Planned block 16 Time":"原本計劃 第 16 列 時間","Planned block 16 Task":"原本計劃 第 16 列 任務","Planned block 16 Notes":"原本計劃 第 16 列 備註","Actual block 16 Time":"實際發生 第 16 列 時間","Actual block 16 Task":"實際發生 第 16 列 任務","Actual block 16 Notes":"實際發生 第 16 列 備註","Planned block 17 Time":"原本計劃 第 17 列 時間","Planned block 17 Task":"原本計劃 第 17 列 任務","Planned block 17 Notes":"原本計劃 第 17 列 備註","Actual block 17 Time":"實際發生 第 17 列 時間","Actual block 17 Task":"實際發生 第 17 列 任務","Actual block 17 Notes":"實際發生 第 17 列 備註","Planned block 18 Time":"原本計劃 第 18 列 時間","Planned block 18 Task":"原本計劃 第 18 列 任務","Planned block 18 Notes":"原本計劃 第 18 列 備註","Actual block 18 Time":"實際發生 第 18 列 時間","Actual block 18 Task":"實際發生 第 18 列 任務","Actual block 18 Notes":"實際發生 第 18 列 備註"}
 const language = document.getElementById('language')
 try { language.value = localStorage.getItem('qingdao-interface-language') === 'zh-Hant' ? 'zh-Hant' : 'en' } catch {}
 const originals = new WeakMap()
@@ -527,6 +625,8 @@ function translated(original, isDynamic) {
   if (language.value !== 'zh-Hant') return original
   const key = original.trim()
   if (Object.hasOwn(translations,key)) return original.replace(key,translations[key])
+  const blockLabel = /^(Planned|Actual) block (\d+) (Time|Task|Notes)$/.exec(key)
+  if (blockLabel) return translations[blockLabel[1]] + ' 第 ' + blockLabel[2] + ' 列 ' + translations[blockLabel[3]]
   if (!isDynamic) return original
   const lines = original.split('\n')
   return lines.map(line => {
