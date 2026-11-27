@@ -108,6 +108,42 @@ textarea{resize:none}
 table col:nth-child(1),table col:nth-child(4){width:18%!important}
 .block-time{display:block;width:100%;min-width:0;min-height:44px;box-sizing:border-box;padding:4px;text-align:center}
 @media(max-width:620px){table col:nth-child(1),table col:nth-child(4){width:32%!important}}
+
+/* Primary and secondary navigation hierarchy */
+.page-switch{
+  gap:5px;padding:5px;border:1px solid var(--line);border-radius:13px;
+  background:#f0e1cf
+}
+.page-switch button{
+  flex:1;min-height:52px;padding:0 12px;border:0;border-radius:9px;
+  font-weight:650;letter-spacing:.01em
+}
+.page-switch button[aria-pressed=true]{
+  color:var(--paper);background:var(--ink);border-color:var(--ink);
+  box-shadow:0 3px 9px rgba(117,71,30,.22)
+}
+.page-switch button[aria-pressed=false]{color:var(--ink);background:transparent}
+@media(max-width:620px){
+  .tabs{
+    display:flex;gap:0;margin:18px 0 10px;padding:0;
+    border-bottom:2px solid #d7c3ae
+  }
+  .tabs button{
+    position:relative;flex:1;min-height:50px;padding:0 8px;
+    border:0;border-radius:0;background:transparent;
+    font-size:1rem;font-weight:600;opacity:.58
+  }
+  .tabs button[aria-pressed=true]{
+    color:var(--ink);background:transparent;border-color:transparent;
+    box-shadow:none;opacity:1
+  }
+  .tabs button[aria-pressed=true]::after{
+    content:"";position:absolute;right:10%;bottom:-2px;left:10%;
+    height:4px;border-radius:4px 4px 0 0;background:var(--ink)
+  }
+  .tabs button[aria-pressed=false]{color:var(--ink);background:transparent}
+}
+
 </style>
 <main id="planner" data-view="plan">
 <header><div class="brand"><span>Qing Dao</span><h1>Daily Planner</h1></div><label class="date">Date <input id="date" type="date" aria-label="Date" required></label><label class="language-control"><span id="language-label">Language</span><select id="language" aria-labelledby="language-label"><option value="en" lang="en">English</option><option value="zh-Hant" lang="zh-Hant">繁體中文</option></select></label></header>
