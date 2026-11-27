@@ -105,6 +105,9 @@ textarea{resize:none}
 .task-with-checkbox input{width:18px;height:18px;flex:none;margin:10px 0 0;accent-color:var(--ink)}
 .task-with-checkbox input:disabled{opacity:.45}
 .task-with-checkbox textarea{flex:1;min-width:0}
+table col:nth-child(1),table col:nth-child(4){width:18%!important}
+.block-time{display:block;width:100%;min-width:0;min-height:44px;box-sizing:border-box;padding:4px;text-align:center}
+@media(max-width:620px){table col:nth-child(1),table col:nth-child(4){width:32%!important}}
 </style>
 <main id="planner" data-view="plan">
 <header><div class="brand"><span>Qing Dao</span><h1>Daily Planner</h1></div><label class="date">Date <input id="date" type="date" aria-label="Date" required></label><label class="language-control"><span id="language-label">Language</span><select id="language" aria-labelledby="language-label"><option value="en" lang="en">English</option><option value="zh-Hant" lang="zh-Hant">繁體中文</option></select></label></header>
@@ -188,8 +191,14 @@ function addRow() {
   fields.forEach(({side, group, label}, column) => {
     const cell = tr.insertCell()
     cell.className = side
-    const input = document.createElement('textarea')
-    input.rows = 1
+    const isTime = label === 'Time'
+    const input = document.createElement(isTime ? 'input' : 'textarea')
+    if (isTime) {
+      input.type = 'time'
+      input.className = 'block-time'
+    } else {
+      input.rows = 1
+    }
     input.setAttribute('aria-label', group + ' block ' + (row + 1) + ' ' + label)
     input.addEventListener('input', () => {
       entry.cells[row * fields.length + column] = input.value
@@ -580,7 +589,13 @@ function load() {
   }
   visibleRows = Math.max(4,rowsUsed(entry))
   while (blockControls.length < visibleRows) addRow()
-  inputs.forEach((input, index) => { input.value = entry.cells[index] ?? '' })
+  inputs.forEach((input, index) => {
+    const value = entry.cells[index] ?? ''
+    if (input.classList.contains('block-time')) {
+      input.type = !value || /^(?:[01]\d|2[0-3]):[0-5]\d$/.test(value) ? 'time' : 'text'
+    }
+    input.value = value
+  })
   refreshBlocks()
   for (const input of recordInputs) {
     input.value = entry.record?.[input.dataset.record] ?? ''
