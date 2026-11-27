@@ -96,9 +96,11 @@ textarea{resize:none}
 .priority-panel input:checked+input{text-decoration:line-through}
 .weather button{white-space:normal}
 @media(max-width:420px){.weather .icons{min-width:0}.weather button{font-size:.75rem}.weather button span{max-width:100%}}
+.language-control{display:grid;gap:4px;font-size:.8rem}.language-control select{font:inherit;color:inherit;background:var(--paper);border:1px solid var(--line);border-radius:6px;padding:5px}
+@media(max-width:540px){header{flex-wrap:wrap}.brand{flex:1 0 100%}}
 </style>
 <main id="planner" data-view="plan">
-<header><div class="brand"><span>Qing Dao</span><h1>Daily Planner</h1></div><label class="date">Date <input id="date" type="date" aria-label="Date" required></label></header>
+<header><div class="brand"><span>Qing Dao</span><h1>Daily Planner</h1></div><label class="date">Date <input id="date" type="date" aria-label="Date" required></label><label class="language-control"><span id="language-label">Language</span><select id="language" aria-labelledby="language-label"><option value="en" lang="en">English</option><option value="zh-Hant" lang="zh-Hant">繁體中文</option></select></label></header>
 <nav class="page-switch" aria-label="Planner pages"><button type="button" aria-controls="schedule-page" aria-pressed="true">Schedule</button><button type="button" aria-controls="record-page" aria-pressed="false">Daily Log</button></nav>
 <section id="schedule-page" aria-label="Schedule">
 <section class="weather" aria-label="Choose weather"><span>Weather</span><div class="icons" id="weather"></div></section>
@@ -356,10 +358,10 @@ async function showMedia(day) {
     for (const item of items) {
       const li = document.createElement('li')
       const details = item.kind === 'audio' ? ['Mood recording'] : [
-        item.emotion && 'Emotion · ' + item.emotion,
-        Number.isInteger(item.strength) && 'Intensity · ' + item.strength + ' / 10',
-        item.reason && 'Reason for purchase · ' + item.reason,
-        item.note && 'Notes · ' + item.note
+        item.emotion && translated('Emotion',true) + ' · ' + item.emotion,
+        Number.isInteger(item.strength) && translated('Intensity',true) + ' · ' + item.strength + ' / 10',
+        item.reason && translated('Reason for purchase',true) + ' · ' + item.reason,
+        item.note && translated('Notes',true) + ' · ' + item.note
       ].filter(Boolean)
       li.textContent = [time(item.at),...details].join('\n')
       const blobs = item.photos ?? [item.blob]
@@ -515,6 +517,62 @@ const now = new Date()
 date.value = [now.getFullYear(),now.getMonth()+1,now.getDate()].map(n => String(n).padStart(2,'0')).join('-')
 date.addEventListener('change', load)
 load()
+const translations = {"Qing Dao":"傾島","Daily Planner":"每日計畫","Language":"語言","Qing Dao｜Daily Planner":"傾島｜每日計畫","Date":"日期","Planner pages":"頁面","Schedule":"日程","Daily Log":"每日紀錄","Choose weather":"選擇天氣","Weather":"天氣","Schedule view":"日程檢視","Planned":"原本計劃","Actual":"實際發生","Top 3 Priorities":"今日三件重要事項","Time Blocks":"時間區塊","Daily Review":"今天結語","Mood":"今天心情","Start recording":"開始錄音","Stop recording":"結束錄音","Physical Well-being":"身體狀態","Meals":"餐食","Breakfast":"早餐","Lunch":"午餐","Dinner":"晚餐","Amount (ml)":"本次飲水量（ml）","Log Water":"記錄喝水","Sleep":"睡眠","Sleep (hr)":"睡眠時間（小時）","Start Sleep":"現在睡覺","End Sleep":"我醒了","Receipts":"購物收據","Choose photos (multiple allowed)":"從相簿或檔案選取照片（可多選）","Take a photo":"用相機拍照","Emotion tag or Emoji":"情緒標籤或 Emoji","e.g. Happy 😊":"例如 開心 😊","Intensity":"情緒強度","0 · None":"0 · 沒有","10 · Very strong":"10 · 很強烈","Reason for purchase":"購買原因","Notes":"備註","Save Receipt":"儲存收據","To-Do":"待辦","Time":"時間","Task":"任務","Snow":"下雪","Sunny":"晴天","Rain":"下雨","Partly cloudy":"晴時多雲","Enter a valid number":"請輸入有效的數值","Could not save the sleep start time":"無法儲存睡眠開始時間","Could not save sleep. Try again.":"無法儲存睡眠紀錄，請再試一次","Could not load recordings in this browser":"此瀏覽器無法讀取錄音","Could not load receipt photos in this browser":"此瀏覽器無法讀取收據照片","Enter a reason and attach a receipt photo":"請填寫購買原因並附上收據","Receipt saved":"收據已儲存","Could not save the receipt. Try again.":"無法儲存收據，請再試一次","Could not save the recording. Try again.":"錄音未能儲存，請再試一次","Recording":"錄音中","Could not start recording. Check microphone permissions.":"無法啟用錄音，請確認麥克風權限","Could not load saved entries in this browser":"這個瀏覽器無法讀取先前的紀錄","Saved on this device":"已儲存於此裝置","Could not save. Your entry is still on this page.":"無法儲存，紀錄暫時保留在此頁","Priority 1":"重要事項 1","Complete priority 1":"完成重要事項 1","Priority 2":"重要事項 2","Complete priority 2":"完成重要事項 2","Priority 3":"重要事項 3","Complete priority 3":"完成重要事項 3","Planned block 1 Time":"原本計劃 第 1 列 時間","Planned block 1 Task":"原本計劃 第 1 列 任務","Planned block 1 Notes":"原本計劃 第 1 列 備註","Actual block 1 Time":"實際發生 第 1 列 時間","Actual block 1 Task":"實際發生 第 1 列 任務","Actual block 1 Notes":"實際發生 第 1 列 備註","Planned block 2 Time":"原本計劃 第 2 列 時間","Planned block 2 Task":"原本計劃 第 2 列 任務","Planned block 2 Notes":"原本計劃 第 2 列 備註","Actual block 2 Time":"實際發生 第 2 列 時間","Actual block 2 Task":"實際發生 第 2 列 任務","Actual block 2 Notes":"實際發生 第 2 列 備註","Planned block 3 Time":"原本計劃 第 3 列 時間","Planned block 3 Task":"原本計劃 第 3 列 任務","Planned block 3 Notes":"原本計劃 第 3 列 備註","Actual block 3 Time":"實際發生 第 3 列 時間","Actual block 3 Task":"實際發生 第 3 列 任務","Actual block 3 Notes":"實際發生 第 3 列 備註","Planned block 4 Time":"原本計劃 第 4 列 時間","Planned block 4 Task":"原本計劃 第 4 列 任務","Planned block 4 Notes":"原本計劃 第 4 列 備註","Actual block 4 Time":"實際發生 第 4 列 時間","Actual block 4 Task":"實際發生 第 4 列 任務","Actual block 4 Notes":"實際發生 第 4 列 備註","Planned block 5 Time":"原本計劃 第 5 列 時間","Planned block 5 Task":"原本計劃 第 5 列 任務","Planned block 5 Notes":"原本計劃 第 5 列 備註","Actual block 5 Time":"實際發生 第 5 列 時間","Actual block 5 Task":"實際發生 第 5 列 任務","Actual block 5 Notes":"實際發生 第 5 列 備註","Planned block 6 Time":"原本計劃 第 6 列 時間","Planned block 6 Task":"原本計劃 第 6 列 任務","Planned block 6 Notes":"原本計劃 第 6 列 備註","Actual block 6 Time":"實際發生 第 6 列 時間","Actual block 6 Task":"實際發生 第 6 列 任務","Actual block 6 Notes":"實際發生 第 6 列 備註","Planned block 7 Time":"原本計劃 第 7 列 時間","Planned block 7 Task":"原本計劃 第 7 列 任務","Planned block 7 Notes":"原本計劃 第 7 列 備註","Actual block 7 Time":"實際發生 第 7 列 時間","Actual block 7 Task":"實際發生 第 7 列 任務","Actual block 7 Notes":"實際發生 第 7 列 備註","Planned block 8 Time":"原本計劃 第 8 列 時間","Planned block 8 Task":"原本計劃 第 8 列 任務","Planned block 8 Notes":"原本計劃 第 8 列 備註","Actual block 8 Time":"實際發生 第 8 列 時間","Actual block 8 Task":"實際發生 第 8 列 任務","Actual block 8 Notes":"實際發生 第 8 列 備註","Planned block 9 Time":"原本計劃 第 9 列 時間","Planned block 9 Task":"原本計劃 第 9 列 任務","Planned block 9 Notes":"原本計劃 第 9 列 備註","Actual block 9 Time":"實際發生 第 9 列 時間","Actual block 9 Task":"實際發生 第 9 列 任務","Actual block 9 Notes":"實際發生 第 9 列 備註","Planned block 10 Time":"原本計劃 第 10 列 時間","Planned block 10 Task":"原本計劃 第 10 列 任務","Planned block 10 Notes":"原本計劃 第 10 列 備註","Actual block 10 Time":"實際發生 第 10 列 時間","Actual block 10 Task":"實際發生 第 10 列 任務","Actual block 10 Notes":"實際發生 第 10 列 備註","Planned block 11 Time":"原本計劃 第 11 列 時間","Planned block 11 Task":"原本計劃 第 11 列 任務","Planned block 11 Notes":"原本計劃 第 11 列 備註","Actual block 11 Time":"實際發生 第 11 列 時間","Actual block 11 Task":"實際發生 第 11 列 任務","Actual block 11 Notes":"實際發生 第 11 列 備註","Planned block 12 Time":"原本計劃 第 12 列 時間","Planned block 12 Task":"原本計劃 第 12 列 任務","Planned block 12 Notes":"原本計劃 第 12 列 備註","Actual block 12 Time":"實際發生 第 12 列 時間","Actual block 12 Task":"實際發生 第 12 列 任務","Actual block 12 Notes":"實際發生 第 12 列 備註","Planned block 13 Time":"原本計劃 第 13 列 時間","Planned block 13 Task":"原本計劃 第 13 列 任務","Planned block 13 Notes":"原本計劃 第 13 列 備註","Actual block 13 Time":"實際發生 第 13 列 時間","Actual block 13 Task":"實際發生 第 13 列 任務","Actual block 13 Notes":"實際發生 第 13 列 備註","Planned block 14 Time":"原本計劃 第 14 列 時間","Planned block 14 Task":"原本計劃 第 14 列 任務","Planned block 14 Notes":"原本計劃 第 14 列 備註","Actual block 14 Time":"實際發生 第 14 列 時間","Actual block 14 Task":"實際發生 第 14 列 任務","Actual block 14 Notes":"實際發生 第 14 列 備註","Planned block 15 Time":"原本計劃 第 15 列 時間","Planned block 15 Task":"原本計劃 第 15 列 任務","Planned block 15 Notes":"原本計劃 第 15 列 備註","Actual block 15 Time":"實際發生 第 15 列 時間","Actual block 15 Task":"實際發生 第 15 列 任務","Actual block 15 Notes":"實際發生 第 15 列 備註","Planned block 16 Time":"原本計劃 第 16 列 時間","Planned block 16 Task":"原本計劃 第 16 列 任務","Planned block 16 Notes":"原本計劃 第 16 列 備註","Actual block 16 Time":"實際發生 第 16 列 時間","Actual block 16 Task":"實際發生 第 16 列 任務","Actual block 16 Notes":"實際發生 第 16 列 備註","Planned block 17 Time":"原本計劃 第 17 列 時間","Planned block 17 Task":"原本計劃 第 17 列 任務","Planned block 17 Notes":"原本計劃 第 17 列 備註","Actual block 17 Time":"實際發生 第 17 列 時間","Actual block 17 Task":"實際發生 第 17 列 任務","Actual block 17 Notes":"實際發生 第 17 列 備註","Planned block 18 Time":"原本計劃 第 18 列 時間","Planned block 18 Task":"原本計劃 第 18 列 任務","Planned block 18 Notes":"原本計劃 第 18 列 備註","Actual block 18 Time":"實際發生 第 18 列 時間","Actual block 18 Task":"實際發生 第 18 列 任務","Actual block 18 Notes":"實際發生 第 18 列 備註"}
+const language = document.getElementById('language')
+try { language.value = localStorage.getItem('qingdao-interface-language') === 'zh-Hant' ? 'zh-Hant' : 'en' } catch {}
+const originals = new WeakMap()
+const dynamic = ['status','receipt-status','water-total','sleep-total','sleep-active','water-log','sleep-log','mood-log','receipt-log']
+const phrases = {'Daily water total':'當日飲水總量','Daily sleep total':'當日睡眠總長','Previous entry':'先前紀錄','In progress':'計時中','Sleep logged for':'睡眠已記錄於','Recording saved for':'錄音已儲存於','Mood recording':'心情錄音','Emotion':'情緒','Intensity':'強度','Reason for purchase':'購買原因','Notes':'備註','Receipt photo':'收據照片'}
+function translated(original, isDynamic) {
+  if (language.value !== 'zh-Hant') return original
+  const key = original.trim()
+  if (Object.hasOwn(translations,key)) return original.replace(key,translations[key])
+  if (!isDynamic) return original
+  const lines = original.split('\n')
+  return lines.map(line => {
+    if (Object.hasOwn(translations,line)) return translations[line]
+    for (const [en,zh] of Object.entries(phrases)) {
+      if (line.startsWith(en+' ') || line === en) return zh + line.slice(en.length)
+    }
+    return line
+  }).join('\n').replaceAll(/(\d+) hr (\d+) min/g,'$1 小時 $2 分鐘').replaceAll(/(\d) to (?=\d)/g,'$1 至 ')
+}
+function applyLanguage() {
+  document.documentElement.lang = language.value
+  document.title = language.value === 'zh-Hant' ? '傾島｜每日計畫' : 'Qing Dao｜Daily Planner'
+  const walker = document.createTreeWalker(planner,NodeFilter.SHOW_TEXT)
+  for (let node = walker.nextNode(); node; node = walker.nextNode()) {
+    const parent = node.parentElement
+    if (parent.closest('select,textarea,script,style') || !node.data.trim()) continue
+    const previous = originals.get(node)
+    const source = previous && previous.result === node.data ? previous.source : node.data
+    const inReceipt = parent.closest('#receipt-log li')
+    // Receipt metadata is localized when rendered so user-entered text stays intact.
+    const output = inReceipt ? source : translated(source,dynamic.some(id=>parent.closest('#'+id)))
+    originals.set(node,{source,result:output})
+    if (node.data !== output) node.data = output
+  }
+  for (const node of planner.querySelectorAll('[aria-label],[placeholder],[title],img[alt]')) {
+    const attrs = originals.get(node) ?? {}
+    for (const attr of ['aria-label','placeholder','title','alt']) {
+      if (!node.hasAttribute(attr)) continue
+      const current = node.getAttribute(attr)
+      const last = attrs[attr]
+      const source = last && last.result === current ? last.source : current
+      const result = translated(source,Boolean(node.closest('#receipt-log')))
+      attrs[attr] = {source,result}
+      if (current !== result) node.setAttribute(attr,result)
+    }
+    originals.set(node,attrs)
+  }
+}
+language.addEventListener('change',()=>{
+  try { localStorage.setItem('qingdao-interface-language',language.value) } catch {}
+  applyLanguage()
+  void showMedia(activeDate)
+})
+new MutationObserver(applyLanguage).observe(planner,{subtree:true,childList:true,characterData:true})
+applyLanguage()
 </script>
 </html>
 
