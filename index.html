@@ -108,6 +108,71 @@ textarea{resize:none}
 table col:nth-child(1),table col:nth-child(4){width:18%!important}
 .block-time{display:block;width:100%;min-width:0;min-height:44px;box-sizing:border-box;padding:4px;text-align:center}
 @media(max-width:620px){table col:nth-child(1),table col:nth-child(4){width:32%!important}}
+
+/* Mobile editing: keep navigation within reach and turn the schedule grid into touch-friendly cards. */
+@media(max-width:620px){
+  html{scroll-padding-top:8.75rem}
+  body{font-size:16px}
+  main{width:calc(100% - 24px);margin:12px auto max(36px,env(safe-area-inset-bottom))}
+  header{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:end;gap:10px 14px;margin-bottom:12px}
+  .brand{grid-column:1/-1}
+  .brand h1{font-size:1.75rem}
+  .date{min-width:0;gap:8px}
+  .date input{width:100%;min-width:0;font-size:16px}
+  .language-control select{min-height:44px;font-size:16px}
+  .page-switch{
+    position:sticky;top:max(8px,env(safe-area-inset-top));z-index:30;
+    gap:5px;margin:0 -4px 12px;padding:5px;
+    border:1px solid #d7c3ae;border-radius:14px;background:var(--paper);
+    box-shadow:0 6px 18px rgba(117,71,30,.10)
+  }
+  .page-switch button{min-height:48px;padding:0 10px;border:0;border-radius:10px;font-size:1rem;font-weight:650}
+  .tabs{
+    position:sticky;top:calc(max(8px,env(safe-area-inset-top)) + 64px);z-index:29;
+    display:flex;gap:6px;margin:0 0 10px;padding:5px 0 8px;background:var(--paper)
+  }
+  .tabs button{min-height:46px;border-radius:11px;font-size:1rem;font-weight:600;background:var(--paper)}
+  .weather{margin-bottom:10px}
+  .time-title{margin:14px 0 6px;font-size:1.25rem}
+  .quiet{margin-bottom:12px;font-size:.95rem}
+  #schedule-page,#record-page{scroll-margin-top:8.75rem}
+  table,tbody{display:block;width:100%}
+  thead{display:none}
+  #rows{display:grid;gap:12px}
+  #rows tr{
+    display:grid;grid-template-columns:minmax(108px,.78fr) minmax(0,1.42fr);
+    overflow:hidden;border:1px solid var(--line);border-radius:16px;
+    background:rgba(255,255,255,.18);box-shadow:0 3px 10px rgba(117,71,30,.05)
+  }
+  #rows td{display:grid;align-content:start;min-width:0;padding:9px 10px;border:0}
+  [data-view=plan] #rows .actual,[data-view=actual] #rows .plan{display:none}
+  #rows td::before{
+    content:attr(data-label);display:block;margin-bottom:3px;
+    font-size:.78rem;font-weight:700;line-height:1.2;letter-spacing:.02em;opacity:.72
+  }
+  #rows .time-cell{grid-column:1;border-right:1px solid #d7c3ae}
+  #rows .task-cell{grid-column:2}
+  #rows .notes-cell{grid-column:1/-1;border-top:1px solid #d7c3ae}
+  #rows textarea,#rows input{font-size:16px}
+  #rows textarea{min-height:46px;padding:4px 0;line-height:1.45}
+  #rows .notes-cell textarea{min-height:56px}
+  .block-time{min-height:48px;padding:0;text-align:left}
+  .task-with-checkbox{gap:8px;padding:0}
+  .task-with-checkbox input{width:24px;height:24px;margin:4px 0 0}
+  .block-actions{gap:7px;padding:5px 0 0}
+  .block-actions label{min-height:44px}
+  .block-actions button{width:100%;min-height:44px;border-radius:10px}
+  .more-blocks{width:100%;min-height:48px;margin-top:12px;border-radius:12px}
+  #record-page{gap:12px}
+  .reflections,.feelings,.habits{gap:12px}
+  .record-card{padding:16px;border-radius:14px}
+  .record-card textarea,.record-card input{font-size:16px}
+  .record-card textarea{min-height:112px;padding:8px;border-radius:8px;background:rgba(255,255,255,.22);line-height:1.5}
+  .reflections>.record-card textarea{min-height:150px}
+  .record-controls .record-action{flex:1;min-height:46px}
+  #water-form .record-action,#receipt-form .record-action{width:100%;min-height:48px}
+}
+
 </style>
 <main id="planner" data-view="plan">
 <header><div class="brand"><span>Qing Dao</span><h1>Daily Planner</h1></div><label class="date">Date <input id="date" type="date" aria-label="Date" required></label><label class="language-control"><span id="language-label">Language</span><select id="language" aria-labelledby="language-label"><option value="en" lang="en">English</option><option value="zh-Hant" lang="zh-Hant">繁體中文</option></select></label></header>
@@ -190,7 +255,9 @@ function addRow() {
   const tr = rows.insertRow()
   fields.forEach(({side, group, label}, column) => {
     const cell = tr.insertCell()
-    cell.className = side
+    cell.className = side + ' ' + label.toLowerCase() + '-cell'
+    cell.dataset.labelSource = label
+    cell.dataset.label = label
     const isTime = label === 'Time'
     const input = document.createElement(isTime ? 'input' : 'textarea')
     if (isTime) {
@@ -334,6 +401,9 @@ for (const button of pageButtons) {
       const selected = tab === button
       tab.setAttribute('aria-pressed', String(selected))
       document.getElementById(tab.getAttribute('aria-controls')).hidden = !selected
+    }
+    if (window.matchMedia('(max-width:620px)').matches) {
+      requestAnimationFrame(() => document.getElementById(button.getAttribute('aria-controls')).scrollIntoView({behavior:'smooth',block:'start'}))
     }
   })
 }
@@ -669,6 +739,9 @@ function applyLanguage() {
       if (current !== result) node.setAttribute(attr,result)
     }
     originals.set(node,attrs)
+  }
+  for (const cell of planner.querySelectorAll('#rows td[data-label-source]')) {
+    cell.dataset.label = translated(cell.dataset.labelSource)
   }
 }
 language.addEventListener('change',()=>{
