@@ -87,13 +87,7 @@ textarea{resize:none}
 @media(max-width:420px){.weather .icons{flex:1}.weather button{padding-inline:2px}}
 .brand span{font-size:.85rem;letter-spacing:.08em}.brand h1{font-size:clamp(1.2rem,4vw,2rem);margin:1px 0 0}
 .date{flex-wrap:wrap;gap:4px 8px}.date input{max-width:100%}
-.priority-panel{margin:16px 0 20px;padding:14px;border:1px solid var(--line);border-radius:12px}
-.priority-panel h2,.time-title{font-size:1.1rem;margin:0 0 8px}
-.priority-panel ol{margin:0;padding-left:1.5rem}
-.priority-panel label{display:flex;gap:8px;align-items:center;border-bottom:1px solid #d7c3ae;min-height:42px}
-.priority-panel input[type=checkbox]{accent-color:var(--ink);width:18px;height:18px}
-.priority-panel input[type=text]{flex:1;min-width:0;min-height:38px}
-.priority-panel input:checked+input{text-decoration:line-through}
+.time-title{font-size:1.1rem;margin:0 0 8px}
 .weather button{white-space:normal}
 @media(max-width:420px){.weather .icons{min-width:0}.weather button{font-size:.75rem}.weather button span{max-width:100%}}
 .language-control{display:grid;gap:4px;font-size:.8rem}.language-control select{font:inherit;color:inherit;background:var(--paper);border:1px solid var(--line);border-radius:6px;padding:5px}
@@ -121,10 +115,6 @@ textarea{resize:none}
 <button type="button" data-view="plan" aria-pressed="true">Planned</button>
 <button type="button" data-view="actual" aria-pressed="false">Actual</button>
 </div>
-<section class="priority-panel" aria-labelledby="priority-title">
-<h2 id="priority-title">Start with one thing</h2><p class="quiet">Pick one thing to focus on. The other two are optional.</p>
-<ol><li><label><input type="checkbox" data-priority-done="priority1Done" aria-label="Complete priority 1"><input type="text" data-record="priority1" aria-label="Priority 1" placeholder="Priority 1"></label></li><li><label><input type="checkbox" data-priority-done="priority2Done" aria-label="Complete priority 2"><input type="text" data-record="priority2" aria-label="Priority 2" placeholder="Priority 2"></label></li><li><label><input type="checkbox" data-priority-done="priority3Done" aria-label="Complete priority 3"><input type="text" data-record="priority3" aria-label="Priority 3" placeholder="Priority 3"></label></li></ol>
-</section>
 <h2 class="time-title">Time Blocks</h2><p class="quiet">Leave the time blank if you need flexibility. Use Notes for the smallest next step.</p>
 <table aria-label="Time Blocks">
 <colgroup><col class="plan" style="width:11%"><col class="plan"><col class="plan"><col class="actual" style="width:11%"><col class="actual"><col class="actual"></colgroup>
@@ -563,14 +553,6 @@ byId('voice-stop').addEventListener('click', () => {
   byId('voice-stop').disabled = true
   if (recorder?.state === 'recording') recorder.stop()
 })
-const priorityChecks = [...document.querySelectorAll('[data-priority-done]')]
-for (const checkbox of priorityChecks) {
-  checkbox.addEventListener('change', () => {
-    entry.record ??= {}
-    entry.record[checkbox.dataset.priorityDone] = checkbox.checked
-    save()
-  })
-}
 function updateWeather() {
   for (const [key, button] of weatherButtons) {
     button.setAttribute('aria-pressed', String(entry.weather === key))
@@ -602,9 +584,6 @@ function load() {
   refreshBlocks()
   for (const input of recordInputs) {
     input.value = entry.record?.[input.dataset.record] ?? ''
-  }
-  for (const checkbox of priorityChecks) {
-    checkbox.checked = entry.record?.[checkbox.dataset.priorityDone] === true
   }
   resetReceipt()
   byId('water-form').reset()
