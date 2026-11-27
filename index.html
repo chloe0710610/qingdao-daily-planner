@@ -114,7 +114,7 @@ textarea{resize:none}
 </div><section class="record-card receipt-card" aria-labelledby="receipt-title">
 <h2 id="receipt-title">購物收據</h2>
 <form id="receipt-form">
-<label>從相簿或檔案上傳<input type="file" id="receipt-photo" accept="image/*"></label>
+<label>從相簿或檔案選取照片（可多選）<input type="file" id="receipt-photo" accept="image/*" multiple></label>
 <label>用相機拍照<input type="file" id="receipt-camera" accept="image/*" capture="environment"></label>
 <label class="receipt-note">情緒標籤或 Emoji<input id="receipt-emotion" type="text" placeholder="例如 開心 😊" maxlength="60"></label>
 <div class="receipt-scale"><label for="receipt-strength">情緒強度</label><output id="strength-value" for="receipt-strength">5 / 10</output><input id="receipt-strength" type="range" min="0" max="10" value="5" step="1"><span>0 · 沒有</span><span>10 · 很強烈</span></div>
@@ -333,13 +333,16 @@ async function showMedia(day) {
         item.note && '備註 · ' + item.note
       ].filter(Boolean)
       li.textContent = [time(item.at),...details].join('\n')
-      const media = document.createElement(item.kind === 'audio' ? 'audio' : 'img')
-      const url = URL.createObjectURL(item.blob)
-      mediaUrls.push(url)
-      media.src = url
-      if (item.kind === 'audio') media.controls = true
-      else media.alt = '收據照片'
-      li.append(media)
+      const blobs = item.photos ?? [item.blob]
+      for (const [index, blob] of blobs.entries()) {
+        const media = document.createElement(item.kind === 'audio' ? 'audio' : 'img')
+        const url = URL.createObjectURL(blob)
+        mediaUrls.push(url)
+        media.src = url
+        if (item.kind === 'audio') media.controls = true
+        else media.alt = '收據照片 ' + (index + 1)
+        li.append(media)
+      }
       const destination = item.kind === 'audio' ? list : receipts
       destination.append(li)
     }
@@ -362,14 +365,13 @@ function resetReceipt() {
   receiptStatus.textContent = ''
 }
 strength.addEventListener('input',showStrength)
-photo.addEventListener('change',() => { if (photo.files.length) camera.value = '' })
-camera.addEventListener('change',() => { if (camera.files.length) photo.value = '' })
+
 receiptForm.addEventListener('submit',async event => {
   event.preventDefault()
   const form = event.currentTarget
   const reason = byId('receipt-reason').value.trim()
-  const blob = photo.files[0] ?? camera.files[0]
-  if (!reason || !blob) {
+  const photos = [...photo.files, ...camera.files]
+  if (!reason || !photos.length) {
     receiptStatus.textContent = '請填寫購買原因並附上收據'
     return
   }
@@ -377,7 +379,7 @@ receiptForm.addEventListener('submit',async event => {
   const submit = form.querySelector('button')
   submit.disabled = true
   try {
-    await addMedia({day,at:Date.now(),kind:'receipt',reason,blob,
+    await addMedia({day,at:Date.now(),kind:'receipt',reason,photos,
       emotion:byId('receipt-emotion').value.trim(),
       strength:strength.valueAsNumber,
       note:byId('receipt-note').value.trim()})
