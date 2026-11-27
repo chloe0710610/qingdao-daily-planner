@@ -1,8 +1,8 @@
 <!doctype html>
-<html lang="zh-Hant">
+<html lang="en">
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>傾島｜每日計畫</title>
+<title>Qing Dao｜Daily Planner</title>
 <style>
 :root{color-scheme:light;--paper:#fcf7f0;--ink:#75471e;--line:#91643e}
 *{box-sizing:border-box}
@@ -85,51 +85,67 @@ textarea{resize:none}
 .weather svg{width:23px;height:23px;fill:none;stroke:currentColor;stroke-width:1.45;stroke-linecap:round;stroke-linejoin:round}
 .weather button[aria-pressed=true]{background:#f0e1cf;border-color:#91643e}
 @media(max-width:420px){.weather .icons{flex:1}.weather button{padding-inline:2px}}
+.brand span{font-size:.85rem;letter-spacing:.08em}.brand h1{font-size:clamp(1.2rem,4vw,2rem);margin:1px 0 0}
+.date{flex-wrap:wrap;gap:4px 8px}.date input{max-width:100%}
+.priority-panel{margin:16px 0 20px;padding:14px;border:1px solid var(--line);border-radius:12px}
+.priority-panel h2,.time-title{font-size:1.1rem;margin:0 0 8px}
+.priority-panel ol{margin:0;padding-left:1.5rem}
+.priority-panel label{display:flex;gap:8px;align-items:center;border-bottom:1px solid #d7c3ae;min-height:42px}
+.priority-panel input[type=checkbox]{accent-color:var(--ink);width:18px;height:18px}
+.priority-panel input[type=text]{flex:1;min-width:0;min-height:38px}
+.priority-panel input:checked+input{text-decoration:line-through}
+.weather button{white-space:normal}
+@media(max-width:420px){.weather .icons{min-width:0}.weather button{font-size:.75rem}.weather button span{max-width:100%}}
 </style>
 <main id="planner" data-view="plan">
-<header><img src="data:image/png;base64,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" alt="傾島 Qing Dao"><label class="date">Date <input id="date" type="date" aria-label="日期" required></label></header>
-<nav class="page-switch" aria-label="頁面"><button type="button" aria-controls="schedule-page" aria-pressed="true">日程</button><button type="button" aria-controls="record-page" aria-pressed="false">每日紀錄</button></nav>
-<section id="schedule-page" aria-label="日程">
-<section class="weather" aria-label="選擇天氣"><span>天氣</span><div class="icons" id="weather"></div></section>
-<div class="tabs" role="group" aria-label="顯示欄位">
-<button type="button" data-view="plan" aria-pressed="true">原本計劃</button>
-<button type="button" data-view="actual" aria-pressed="false">實際發生</button>
+<header><div class="brand"><span>Qing Dao</span><h1>Daily Planner</h1></div><label class="date">Date <input id="date" type="date" aria-label="Date" required></label></header>
+<nav class="page-switch" aria-label="Planner pages"><button type="button" aria-controls="schedule-page" aria-pressed="true">Schedule</button><button type="button" aria-controls="record-page" aria-pressed="false">Daily Log</button></nav>
+<section id="schedule-page" aria-label="Schedule">
+<section class="weather" aria-label="Choose weather"><span>Weather</span><div class="icons" id="weather"></div></section>
+<div class="tabs" role="group" aria-label="Schedule view">
+<button type="button" data-view="plan" aria-pressed="true">Planned</button>
+<button type="button" data-view="actual" aria-pressed="false">Actual</button>
 </div>
-<table aria-label="每日計畫">
+<section class="priority-panel" aria-labelledby="priority-title">
+<h2 id="priority-title">Top 3 Priorities</h2>
+<ol><li><label><input type="checkbox" data-priority-done="priority1Done" aria-label="Complete priority 1"><input type="text" data-record="priority1" aria-label="Priority 1" placeholder="Priority 1"></label></li><li><label><input type="checkbox" data-priority-done="priority2Done" aria-label="Complete priority 2"><input type="text" data-record="priority2" aria-label="Priority 2" placeholder="Priority 2"></label></li><li><label><input type="checkbox" data-priority-done="priority3Done" aria-label="Complete priority 3"><input type="text" data-record="priority3" aria-label="Priority 3" placeholder="Priority 3"></label></li></ol>
+</section>
+<h2 class="time-title">Time Blocks</h2>
+<table aria-label="Time Blocks">
 <colgroup><col class="plan" style="width:11%"><col class="plan"><col class="plan"><col class="actual" style="width:11%"><col class="actual"><col class="actual"></colgroup>
 <thead>
-<tr><th class="plan" colspan="3" scope="colgroup">原本計劃</th><th class="actual" colspan="3" scope="colgroup">實際發生</th></tr>
+<tr><th class="plan" colspan="3" scope="colgroup">Planned</th><th class="actual" colspan="3" scope="colgroup">Actual</th></tr>
 <tr id="headings"></tr>
 </thead>
 <tbody id="rows"></tbody>
 </table>
 </section>
-<section id="record-page" aria-label="每日紀錄" hidden>
-<div class="reflections"><label class="record-card">今天結語<textarea data-record="reflection" rows="3"></textarea></label><div class="feelings"><section class="record-card">
-<label>今天心情<textarea data-record="mood" rows="3"></textarea></label>
-<div class="record-controls"><button class="record-action" type="button" id="voice-start">開始錄音</button><button class="record-action" type="button" id="voice-stop" disabled>結束錄音</button></div>
+<section id="record-page" aria-label="Daily Log" hidden>
+<div class="reflections"><label class="record-card">Daily Review<textarea data-record="reflection" rows="3"></textarea></label><div class="feelings"><section class="record-card">
+<label>Mood<textarea data-record="mood" rows="3"></textarea></label>
+<div class="record-controls"><button class="record-action" type="button" id="voice-start">Start recording</button><button class="record-action" type="button" id="voice-stop" disabled>Stop recording</button></div>
 
 <ul class="record-log" id="mood-log"></ul>
-</section><label class="record-card">身體狀態<textarea data-record="body" rows="3"></textarea></label></div></div>
+</section><label class="record-card">Physical Well-being<textarea data-record="body" rows="3"></textarea></label></div></div>
 <div class="habits">
-<fieldset class="record-card"><legend><svg aria-hidden="true" width="28" height="28" viewBox="0 0 28 28" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><path d="M3 19h22M5 17a9 9 0 0 1 18 0M14 8V5m-2 0h4"/></svg>餐食</legend><label class="meal">早餐<input type="text" data-record="breakfast"></label><label class="meal">午餐<input type="text" data-record="lunch"></label><label class="meal">晚餐<input type="text" data-record="dinner"></label></fieldset>
-<form class="record-card" id="water-form"><label>本次飲水量（ml）<span class="quantity"><input id="water-amount" type="number" min="1" step="1" inputmode="numeric" required></span></label>
-<button class="record-action" type="submit">記錄喝水</button><output id="water-total"></output><ul class="record-log" id="water-log"></ul></form>
-<section class="record-card" aria-label="睡眠時間">睡眠時間
-<div class="record-controls"><button class="record-action" type="button" id="sleep-start">現在睡覺</button><button class="record-action" type="button" id="sleep-stop" disabled>我醒了</button></div>
+<fieldset class="record-card"><legend><svg aria-hidden="true" width="28" height="28" viewBox="0 0 28 28" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><path d="M3 19h22M5 17a9 9 0 0 1 18 0M14 8V5m-2 0h4"/></svg>Meals</legend><label class="meal">Breakfast<input type="text" data-record="breakfast"></label><label class="meal">Lunch<input type="text" data-record="lunch"></label><label class="meal">Dinner<input type="text" data-record="dinner"></label></fieldset>
+<form class="record-card" id="water-form"><label>Amount (ml)<span class="quantity"><input id="water-amount" type="number" min="1" step="1" inputmode="numeric" required></span></label>
+<button class="record-action" type="submit">Log Water</button><output id="water-total"></output><ul class="record-log" id="water-log"></ul></form>
+<section class="record-card" aria-label="Sleep">Sleep
+<div class="record-controls"><button class="record-action" type="button" id="sleep-start">Start Sleep</button><button class="record-action" type="button" id="sleep-stop" disabled>End Sleep</button></div>
 <output id="sleep-active"></output><output id="sleep-total"></output><ul class="record-log" id="sleep-log"></ul></section>
 </div><section class="record-card receipt-card" aria-labelledby="receipt-title">
-<h2 id="receipt-title">購物收據</h2>
+<h2 id="receipt-title">Receipts</h2>
 <form id="receipt-form">
-<label>從相簿或檔案選取照片（可多選）<input type="file" id="receipt-photo" accept="image/*" multiple></label>
-<label>用相機拍照<input type="file" id="receipt-camera" accept="image/*" capture="environment"></label>
-<label class="receipt-note">情緒標籤或 Emoji<input id="receipt-emotion" type="text" placeholder="例如 開心 😊" maxlength="60"></label>
-<div class="receipt-scale"><label for="receipt-strength">情緒強度</label><output id="strength-value" for="receipt-strength">5 / 10</output><input id="receipt-strength" type="range" min="0" max="10" value="5" step="1"><span>0 · 沒有</span><span>10 · 很強烈</span></div>
-<label class="receipt-note">購買原因<input id="receipt-reason" type="text" required></label>
-<label class="receipt-note">備註<textarea id="receipt-note" rows="2"></textarea></label>
-<button class="record-action" type="submit">儲存收據</button><p id="receipt-status" role="status"></p>
+<label>Choose photos (multiple allowed)<input type="file" id="receipt-photo" accept="image/*" multiple></label>
+<label>Take a photo<input type="file" id="receipt-camera" accept="image/*" capture="environment"></label>
+<label class="receipt-note">Emotion tag or Emoji<input id="receipt-emotion" type="text" placeholder="e.g. Happy 😊" maxlength="60"></label>
+<div class="receipt-scale"><label for="receipt-strength">Intensity</label><output id="strength-value" for="receipt-strength">5 / 10</output><input id="receipt-strength" type="range" min="0" max="10" value="5" step="1"><span>0 · None</span><span>10 · Very strong</span></div>
+<label class="receipt-note">Reason for purchase<input id="receipt-reason" type="text" required></label>
+<label class="receipt-note">Notes<textarea id="receipt-note" rows="2"></textarea></label>
+<button class="record-action" type="submit">Save Receipt</button><p id="receipt-status" role="status"></p>
 </form><ul class="record-log receipts" id="receipt-log"></ul></section>
-<label class="record-card">待辦<textarea data-record="todos" rows="3"></textarea></label>
+<label class="record-card">To-Do<textarea data-record="todos" rows="3"></textarea></label>
 </section>
 <footer><span id="status" role="status"></span></footer>
 </main>
@@ -145,8 +161,8 @@ let entry
 let activeDate
 const drafts = new Map()
 
-for (const [side, group] of [['plan','原本計劃'],['actual','實際發生']]) {
-  for (const label of ['時間','事件','備註']) {
+for (const [side, group] of [['plan','Planned'],['actual','Actual']]) {
+  for (const label of ['Time','Task','Notes']) {
     fields.push({side, group, label})
     const th = document.createElement('th')
     th.scope = 'col'
@@ -164,7 +180,7 @@ for (let row = 0; row < 18; row++) {
     cell.className = side
     const input = document.createElement('textarea')
     input.rows = 1
-    input.setAttribute('aria-label', group + ' 第' + (row + 1) + '列 ' + label)
+    input.setAttribute('aria-label', group + ' block ' + (row + 1) + ' ' + label)
     input.addEventListener('input', () => {
       entry.cells[row * fields.length + column] = input.value
       save()
@@ -175,7 +191,7 @@ for (let row = 0; row < 18; row++) {
 }
 
 const weatherButtons = new Map()
-for (const [key, label] of [['snow','下雪'],['sun','晴天'],['rain','下雨'],['cloud','晴時多雲']]) {
+for (const [key, label] of [['snow','Snow'],['sun','Sunny'],['rain','Rain'],['cloud','Partly cloudy']]) {
   const button = document.createElement('button')
   button.type = 'button'
   button.title = label
@@ -221,7 +237,7 @@ const recordInputs = [...document.querySelectorAll('[data-record]')]
 for (const input of recordInputs) {
   input.addEventListener('input', () => {
     if (!input.validity.valid) {
-      status.textContent = '請輸入有效的數值'
+      status.textContent = 'Enter a valid number'
       return
     }
     entry.record ??= {}
@@ -234,11 +250,11 @@ const byId = id => document.getElementById(id)
 const sleepKey = 'qingdao-active-sleep'
 let sleeping
 try { sleeping = JSON.parse(localStorage.getItem(sleepKey)) } catch {}
-const clock = new Intl.DateTimeFormat('zh-TW',{hour:'2-digit',minute:'2-digit'})
+const clock = new Intl.DateTimeFormat('en-US',{hour:'2-digit',minute:'2-digit'})
 const time = timestamp => clock.format(timestamp)
 const duration = ms => {
   const minutes = Math.max(0, Math.floor(ms / 60000))
-  return Math.floor(minutes / 60) + ' 小時 ' + minutes % 60 + ' 分鐘'
+  return Math.floor(minutes / 60) + ' hr ' + minutes % 60 + ' min'
 }
 function renderList(id, labels) {
   byId(id).replaceChildren(...labels.map(label => {
@@ -253,13 +269,13 @@ function renderTracking() {
   const sleep = record.sleepEvents ?? []
   const legacyWater = Number(record.water) || 0
   const legacySleep = (Number(record.sleep) || 0) * 3600000
-  byId('water-total').textContent = '當日飲水 ' + (legacyWater + water.reduce((sum, item) => sum + item.ml, 0)) + ' ml'
-  byId('sleep-total').textContent = '當日睡眠 ' + duration(legacySleep + sleep.reduce((sum,item) => sum + item.end - item.start,0))
-  renderList('water-log', [...(legacyWater ? ['先前紀錄 ' + legacyWater + ' ml'] : []), ...water.map(item => time(item.at) + ' · ' + item.ml + ' ml')])
-  renderList('sleep-log', [...(legacySleep ? ['先前紀錄 ' + duration(legacySleep)] : []), ...sleep.map(item => time(item.start) + ' 至 ' + time(item.end) + ' · ' + duration(item.end - item.start))])
+  byId('water-total').textContent = 'Daily water total ' + (legacyWater + water.reduce((sum, item) => sum + item.ml, 0)) + ' ml'
+  byId('sleep-total').textContent = 'Daily sleep total ' + duration(legacySleep + sleep.reduce((sum,item) => sum + item.end - item.start,0))
+  renderList('water-log', [...(legacyWater ? ['Previous entry ' + legacyWater + ' ml'] : []), ...water.map(item => time(item.at) + ' · ' + item.ml + ' ml')])
+  renderList('sleep-log', [...(legacySleep ? ['Previous entry ' + duration(legacySleep)] : []), ...sleep.map(item => time(item.start) + ' to ' + time(item.end) + ' · ' + duration(item.end - item.start))])
   byId('sleep-start').disabled = Boolean(sleeping)
   byId('sleep-stop').disabled = !sleeping
-  byId('sleep-active').textContent = sleeping ? '計時中 · ' + sleeping.day + ' ' + time(sleeping.start) : ''
+  byId('sleep-active').textContent = sleeping ? 'In progress · ' + sleeping.day + ' ' + time(sleeping.start) : ''
 }
 const localDay = (now = new Date()) => [now.getFullYear(),now.getMonth()+1,now.getDate()].map(n => String(n).padStart(2,'0')).join('-')
 byId('water-form').addEventListener('submit', event => {
@@ -278,7 +294,7 @@ byId('sleep-start').addEventListener('click', () => {
     localStorage.setItem(sleepKey,JSON.stringify(start))
     sleeping = start
     renderTracking()
-  } catch { status.textContent = '無法儲存睡眠開始時間' }
+  } catch { status.textContent = 'Could not save the sleep start time' }
 })
 byId('sleep-stop').addEventListener('click', () => {
   if (!sleeping) return
@@ -294,10 +310,10 @@ byId('sleep-stop').addEventListener('click', () => {
     }
     localStorage.removeItem(sleepKey)
     drafts.set(sleeping.day,target)
-    status.textContent = '睡眠已記錄於 ' + sleeping.day
+    status.textContent = 'Sleep logged for ' + sleeping.day
     sleeping = null
     renderTracking()
-  } catch { status.textContent = '無法儲存睡眠紀錄，請再試一次' }
+  } catch { status.textContent = 'Could not save sleep. Try again.' }
 })
 
 let mediaDB
@@ -339,11 +355,11 @@ async function showMedia(day) {
     if (turn !== mediaRender) return
     for (const item of items) {
       const li = document.createElement('li')
-      const details = item.kind === 'audio' ? ['心情錄音'] : [
-        item.emotion && '情緒 · ' + item.emotion,
-        Number.isInteger(item.strength) && '強度 · ' + item.strength + ' / 10',
-        item.reason && '購買原因 · ' + item.reason,
-        item.note && '備註 · ' + item.note
+      const details = item.kind === 'audio' ? ['Mood recording'] : [
+        item.emotion && 'Emotion · ' + item.emotion,
+        Number.isInteger(item.strength) && 'Intensity · ' + item.strength + ' / 10',
+        item.reason && 'Reason for purchase · ' + item.reason,
+        item.note && 'Notes · ' + item.note
       ].filter(Boolean)
       li.textContent = [time(item.at),...details].join('\n')
       const blobs = item.photos ?? [item.blob]
@@ -353,7 +369,7 @@ async function showMedia(day) {
         mediaUrls.push(url)
         media.src = url
         if (item.kind === 'audio') media.controls = true
-        else media.alt = '收據照片 ' + (index + 1)
+        else media.alt = 'Receipt photo ' + (index + 1)
         li.append(media)
       }
       const destination = item.kind === 'audio' ? list : receipts
@@ -361,8 +377,8 @@ async function showMedia(day) {
     }
   } catch {
     if (turn === mediaRender) {
-      list.textContent = '此瀏覽器無法讀取錄音'
-      receipts.textContent = '此瀏覽器無法讀取收據照片'
+      list.textContent = 'Could not load recordings in this browser'
+      receipts.textContent = 'Could not load receipt photos in this browser'
     }
   }
 }
@@ -385,7 +401,7 @@ receiptForm.addEventListener('submit',async event => {
   const reason = byId('receipt-reason').value.trim()
   const photos = [...photo.files, ...camera.files]
   if (!reason || !photos.length) {
-    receiptStatus.textContent = '請填寫購買原因並附上收據'
+    receiptStatus.textContent = 'Enter a reason and attach a receipt photo'
     return
   }
   const day = activeDate
@@ -399,9 +415,9 @@ receiptForm.addEventListener('submit',async event => {
     if (activeDate === day) {
       resetReceipt()
       await showMedia(day)
-      receiptStatus.textContent = '收據已儲存'
+      receiptStatus.textContent = 'Receipt saved'
     }
-  } catch { receiptStatus.textContent = '無法儲存收據，請再試一次' }
+  } catch { receiptStatus.textContent = 'Could not save the receipt. Try again.' }
   finally { submit.disabled = false }
 })
 let recorder
@@ -424,23 +440,31 @@ byId('voice-start').addEventListener('click',async () => {
         if (!blob.size) throw new Error('empty recording')
         await addMedia({day,at,kind:'audio',blob})
         if (day === activeDate) await showMedia(day)
-        status.textContent = '錄音已儲存於 ' + day
-      } catch { status.textContent = '錄音未能儲存，請再試一次' }
+        status.textContent = 'Recording saved for ' + day
+      } catch { status.textContent = 'Could not save the recording. Try again.' }
       finally { start.disabled = false }
     }
     recorder.start()
     stop.disabled = false
-    status.textContent = '錄音中'
+    status.textContent = 'Recording'
   } catch {
     stream?.getTracks().forEach(track => track.stop())
     start.disabled = false
-    status.textContent = '無法啟用錄音，請確認麥克風權限'
+    status.textContent = 'Could not start recording. Check microphone permissions.'
   }
 })
 byId('voice-stop').addEventListener('click', () => {
   byId('voice-stop').disabled = true
   if (recorder?.state === 'recording') recorder.stop()
 })
+const priorityChecks = [...document.querySelectorAll('[data-priority-done]')]
+for (const checkbox of priorityChecks) {
+  checkbox.addEventListener('change', () => {
+    entry.record ??= {}
+    entry.record[checkbox.dataset.priorityDone] = checkbox.checked
+    save()
+  })
+}
 function updateWeather() {
   for (const [key, button] of weatherButtons) {
     button.setAttribute('aria-pressed', String(entry.weather === key))
@@ -461,7 +485,7 @@ function load() {
     try {
       entry = JSON.parse(localStorage.getItem(storageKey()))
     } catch {
-      status.textContent = '這個瀏覽器無法讀取先前的紀錄'
+      status.textContent = 'Could not load saved entries in this browser'
     }
     entry ??= {weather:'',cells:{}}
     drafts.set(activeDate, entry)
@@ -469,6 +493,9 @@ function load() {
   inputs.forEach((input, index) => { input.value = entry.cells[index] ?? '' })
   for (const input of recordInputs) {
     input.value = entry.record?.[input.dataset.record] ?? ''
+  }
+  for (const checkbox of priorityChecks) {
+    checkbox.checked = entry.record?.[checkbox.dataset.priorityDone] === true
   }
   resetReceipt()
   byId('water-form').reset()
@@ -479,9 +506,9 @@ function load() {
 function save() {
   try {
     localStorage.setItem(storageKey(), JSON.stringify(entry))
-    status.textContent = '已儲存於此瀏覽器'
+    status.textContent = 'Saved on this device'
   } catch {
-    status.textContent = '無法儲存，紀錄暫時保留在此頁'
+    status.textContent = 'Could not save. Your entry is still on this page.'
   }
 }
 const now = new Date()
