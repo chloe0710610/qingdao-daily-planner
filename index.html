@@ -107,6 +107,10 @@ textarea{resize:none}
 .more-blocks{margin-top:10px}
 @media(max-width:620px){.block-actions button{width:100%}}
 @media print{.block-actions,.more-blocks{display:none}}
+.task-with-checkbox{display:flex;align-items:flex-start;gap:4px;padding-left:7px}
+.task-with-checkbox input{width:18px;height:18px;flex:none;margin:10px 0 0;accent-color:var(--ink)}
+.task-with-checkbox input:disabled{opacity:.45}
+.task-with-checkbox textarea{flex:1;min-width:0}
 </style>
 <main id="planner" data-view="plan">
 <header><div class="brand"><span>Qing Dao</span><h1>Daily Planner</h1></div><label class="date">Date <input id="date" type="date" aria-label="Date" required></label><label class="language-control"><span id="language-label">Language</span><select id="language" aria-labelledby="language-label"><option value="en" lang="en">English</option><option value="zh-Hant" lang="zh-Hant">繁體中文</option></select></label></header>
@@ -207,18 +211,23 @@ function addRow() {
     if (column === 2) {
       const controls = document.createElement('div')
       controls.className = 'block-actions'
-      const label = document.createElement('label')
+      const taskCell = tr.cells[1]
+      const taskInput = taskCell.querySelector('textarea')
+      const task = document.createElement('div')
+      task.className = 'task-with-checkbox'
       const done = document.createElement('input')
       done.type = 'checkbox'
-      label.append(done, document.createTextNode('Done'))
+      done.setAttribute('aria-label', 'Complete planned task ' + (row + 1))
+      task.append(done, taskInput)
+      taskCell.append(task)
       const move = document.createElement('button')
       move.type = 'button'
       move.textContent = 'Move to tomorrow'
       const moved = document.createElement('small')
       moved.textContent = 'Moved to tomorrow'
-      controls.append(label, move, moved)
+      controls.append(move, moved)
       cell.append(controls)
-      blockControls.push({tr, controls, done, move, moved, label})
+      blockControls.push({tr, controls, done, move, moved})
       done.addEventListener('change', () => {
         const block = blockState(row)
         block.done = done.checked
@@ -234,14 +243,14 @@ function blockState(row) {
   return entry.blocks[row] ??= {}
 }
 function refreshBlocks() {
-  blockControls.forEach(({tr,controls,done,move,moved,label},row) => {
+  blockControls.forEach(({tr,controls,done,move,moved},row) => {
     const state = entry.blocks?.[row]
     const hasTask = Boolean(entry.cells[row * fields.length + 1]?.trim())
     const wasMoved = Boolean(state?.moved)
     tr.hidden = row >= visibleRows
     controls.hidden = !hasTask && !wasMoved
     done.checked = state?.done === true
-    label.hidden = wasMoved
+    done.disabled = !hasTask || wasMoved
     move.hidden = wasMoved || done.checked
     moved.hidden = !wasMoved
   })
@@ -625,6 +634,8 @@ function translated(original, isDynamic) {
   if (language.value !== 'zh-Hant') return original
   const key = original.trim()
   if (Object.hasOwn(translations,key)) return original.replace(key,translations[key])
+  const completeLabel = /^Complete planned task (\d+)$/.exec(key)
+  if (completeLabel) return '完成第 ' + completeLabel[1] + ' 列計畫'
   const blockLabel = /^(Planned|Actual) block (\d+) (Time|Task|Notes)$/.exec(key)
   if (blockLabel) return translations[blockLabel[1]] + ' 第 ' + blockLabel[2] + ' 列 ' + translations[blockLabel[3]]
   if (!isDynamic) return original
